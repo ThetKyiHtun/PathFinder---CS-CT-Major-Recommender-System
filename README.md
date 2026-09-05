@@ -1,6 +1,6 @@
 # PathFinder
 
-This project was developed by Master Students (Thet Kyi Htun,Thiha Oo,Ye Htut Naung,Khoon Sett Naing,Hein Myat Paing,Htet Myat Aung,Nan La Min You,Phue Pyae Pyae San,Su Myat Noe Oo,Theint Theint Lwim,Khin Nadi Kyaw)from University Of Computer Studies,Yangon (UCSY).
+This project was developed by Master Students (Thet Kyi Htun,Thiha Oo,Ye Htut Naung,Khoon Sett Naing,Hein Myat Paing,Htet Myat Aung,Nan La Min You,Phue Pyae Pyae San,Su Myat Noe Oo,Theint Theint Lwim,Khin Nadi Kyaw) from University Of Computer Studies,Yangon (UCSY).
 
 **CS & CT Major Recommender System**
 
