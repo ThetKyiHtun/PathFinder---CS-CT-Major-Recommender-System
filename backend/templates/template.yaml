@@ -1,0 +1,80 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  PathFinder: CS & CT Major Recommender System - serverless API
+  (API Gateway -> AWS Lambda -> Amazon Bedrock Knowledge Base with built-in fallback)
+
+Globals:
+  Function:
+    Runtime: python3.12
+    Architectures:
+      - x86_64
+    Timeout: 30
+    MemorySize: 256
+    Tracing: Active
+    Environment:
+      Variables:
+        KNOWLEDGE_BASE_ID: !Ref KnowledgeBaseId
+        BEDROCK_MODEL_ID: !Ref BedrockModelId
+
+Parameters:
+  KnowledgeBaseId:
+    Type: String
+    Default: ''
+    Description: Optional AWS Bedrock Knowledge Base ID. Leave empty to skip the KB path.
+  BedrockModelId:
+    Type: String
+    Default: 'amazon.nova-pro-v1:0'
+    Description: Amazon Bedrock foundation model used by the Converse API.
+
+Resources:
+  PathFinderFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ../lambda
+      Handler: lambda_handler.lambda_handler
+      Policies:
+        - AWSLambdaBasicExecutionRole
+        - Statement:
+            - Sid: BedrockInvokeModel
+              Effect: Allow
+              Action:
+                - bedrock:InvokeModel
+                - bedrock:InvokeModelWithResponseStream
+              Resource:
+                - !Sub 'arn:aws:bedrock:${AWS::Region}::foundation-model/${BedrockModelId}'
+                - !Sub 'arn:aws:bedrock:${AWS::Region}::foundation-model/amazon.nova-lite-v1:0'
+                - !Sub 'arn:aws:bedrock:${AWS::Region}::foundation-model/anthropic.claude-3-5-sonnet-20241022-v2:0'
+                - !Sub 'arn:aws:bedrock:${AWS::Region}::foundation-model/meta.llama3-70b-instruct-v1:0'
+            - Sid: BedrockRetrieveAndGenerate
+              Effect: Allow
+              Action:
+                - bedrock:RetrieveAndGenerate
+                - bedrock:Retrieve
+              Resource: '*'
+      Events:
+        RecommendApi:
+          Type: Api
+          Properties:
+            Path: /recommend
+            Method: POST
+            RestApiId: !Ref PathFinderApi
+
+  PathFinderApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: prod
+      Cors:
+        AllowOrigin: "'*'"
+        AllowMethods: "'POST,OPTIONS'"
+        AllowHeaders: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+      EndpointConfiguration:
+        Type: REGIONAL
+
+Outputs:
+  PathFinderApiUrl:
+    Description: API Gateway endpoint for the /recommend route
+    Value: !Sub "https://${PathFinderApi}.execute-api.${AWS::Region}.amazonaws.com/prod/recommend"
+  PathFinderFunctionName:
+    Description: Lambda function logical name
+    Value: !Ref PathFinderFunction
